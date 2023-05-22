@@ -82,12 +82,19 @@ class profile_field_remotevalidation extends profile_field_base {
         // overwrite if necessary
         $errors = array();
 
-	$input_name_array = $array = get_object_vars($usernew);
+
+        $usernew->firstname = "xxx";
+
+        $input_name_array = $array = get_object_vars($usernew);
 
         if ( !preg_match('/(\d{4}\-\d{4}\-\d{4}\-\d{3}(?:\d|X))/', $input_name_array[$this->inputname] ) ){
 
-           $errors[$this->inputname] = "Invalid remote validation error-".preg_last_error();
-	}
+           // $errors[$this->inputname] = "Invalid remote validation error-".preg_last_error();
+	    }
+
+        if ($message = $this->validate($input_name_array[$this->inputname])) {
+            $errors[$this->inputname] = "Validation returned the following error: " . $message;
+        }
 
         return $errors;
 
@@ -105,6 +112,71 @@ class profile_field_remotevalidation extends profile_field_base {
     public function get_field_properties() {
         return array(PARAM_TEXT, NULL_NOT_ALLOWED);
     }
-}
 
+    /**
+     * Validate via a remote server.
+     *
+     * @return null|string
+     */
+    public function validate(string $datastring) {
+
+        if (!empty($this->field->param4)) {
+            $url1 = str_replace('$$', $datastring, $this->field->param4);
+        }
+        if (!empty($this->field->param3)) {
+            $url2 = str_replace('$$', $datastring, $this->field->param3);
+        }
+
+        $fetchagain = false;
+        if (empty($url1) || !$object = self::send_request($url1)) {
+            $fetchagain = true;
+        } else if (!isset($object->err_msg) || $object->err_msg != "ok") {
+            $fetchagain = true;
+        }
+
+        // If we have no valid result, we try with the second url.
+        if (!empty($url2) && $fetchagain) {
+            $object = self::send_request($url2);
+        }
+
+        if (empty($url1) && empty($url2)) {
+            return get_string('noserverdefined', 'profilefield_remotevalidation');
+        }
+
+        if (!isset($object->err_msg)) {
+            return get_string('problemwithserver', 'profilefield_remotevalidation');
+        } else if ($object->err_msg != "ok") {
+            return get_string('yourpinisinvalid', 'profilefield_remotevalidation');
+        }
+
+        return null;
+    }
+
+    /**
+     * Function to effectively trigger the curl request.
+     *
+     * @param string $url
+     * @return object
+     */
+    private function send_request(string $url) {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, array(
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        // CURLOPT_ENCODING => '',
+        // CURLOPT_MAXREDIRS => 10,
+        CURLOPT_TIMEOUT => 20,
+        // CURLOPT_FOLLOWLOCATION => true,
+        // CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+        CURLOPT_CUSTOMREQUEST => 'GET',
+        ));
+
+        $response = curl_exec($curl);
+
+        curl_close($curl);
+
+        return json_decode($response);
+    }
+}
 

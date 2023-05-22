@@ -43,6 +43,11 @@ class profile_define_remotevalidation extends profile_define_base {
         $form->setType('param4', PARAM_URL);
         $form->addHelpButton('param4', 'profilefieldlink', 'admin');
 
+        // Param 4 for text type contains a link.
+        $form->addElement('text', 'param3', get_string('profilefieldlink', 'admin'));
+        $form->setType('param3', PARAM_URL);
+        $form->addHelpButton('param3', 'profilefieldlink', 'admin');
+
         // Param 5 for text type contains link target.
 	    // Include the target in case you want it to link to another uri
         $targetoptions = array( ''       => get_string('linktargetnone', 'editor'),
@@ -53,8 +58,6 @@ class profile_define_remotevalidation extends profile_define_base {
         $form->addElement('select', 'param5', get_string('profilefieldlinktarget', 'admin'), $targetoptions);
         $form->setType('param5', PARAM_RAW);
     }
-
-
 
     /**
      * Validate the data from the add/edit profile field form
@@ -67,15 +70,6 @@ class profile_define_remotevalidation extends profile_define_base {
     function define_validate_specific($data, $files) {
         // overwrite if necessary
         $errors = array();
-
-        // regex check
-
-        if ($data->defaultdata!='' && !preg_match('/(\d{4}\-\d{4}\-\d{4}\-\d{3}(?:\d|X))/', $data->defaultdata) ){
-           $errors['defaultdata'] = "Invalid remotevalidation error-".preg_last_error();
-	}
-
-
-
 
         return $errors;
     }
