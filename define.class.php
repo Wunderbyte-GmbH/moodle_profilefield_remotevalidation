@@ -32,30 +32,25 @@ class profile_define_remotevalidation extends profile_define_base {
      *
      * @param moodleform $form reference to moodleform for adding elements.
      */
-    function define_form_specific($form) {
+    public function define_form_specific($form) {
 
         // Default data.
         $form->addElement('text', 'defaultdata', get_string('profiledefaultdata', 'admin'), 'size="50"');
         $form->setType('defaultdata', PARAM_TEXT);
 
         // Param 4 for text type contains a link.
-        $form->addElement('text', 'param4', get_string('profilefieldlink', 'admin'));
+        $form->addElement('text', 'param4', get_string('profilefieldlink', 'admin') . " 01");
         $form->setType('param4', PARAM_URL);
         $form->addHelpButton('param4', 'profilefieldlink', 'admin');
 
         // Param 4 for text type contains a link.
-        $form->addElement('text', 'param3', get_string('profilefieldlink', 'admin'));
+        $form->addElement('text', 'param3', get_string('profilefieldlink', 'admin') . " 02");
         $form->setType('param3', PARAM_URL);
         $form->addHelpButton('param3', 'profilefieldlink', 'admin');
 
-        // Param 5 for text type contains link target.
-	    // Include the target in case you want it to link to another uri
-        $targetoptions = array( ''       => get_string('linktargetnone', 'editor'),
-                                '_blank' => get_string('linktargetblank', 'editor'),
-                                '_self'  => get_string('linktargetself', 'editor'),
-                                '_top'   => get_string('linktargettop', 'editor')
-                              );
-        $form->addElement('select', 'param5', get_string('profilefieldlinktarget', 'admin'), $targetoptions);
+        // Param 5 extra Regex validation - the regex pattern to be used for verifying user input.
+        $form->addElement('text', 'param5', get_string('regexpattern', 'profilefield_remotevalidation'));
+        $form->addHelpButton('param5', 'regexpattern', 'profilefield_remotevalidation');
         $form->setType('param5', PARAM_RAW);
     }
 
@@ -67,11 +62,37 @@ class profile_define_remotevalidation extends profile_define_base {
      * @param object $files files uploaded
      * @return array associative array of error messages
      */
-    function define_validate_specific($data, $files) {
+    public function define_validate_specific($data, $files) {
         // overwrite if necessary
         $errors = array();
 
         return $errors;
+    }
+
+    /**
+     * Alter data before showing the form to user and fill the form with decode values.
+     *
+     * @param $mform
+     * @return void
+     */
+    public function define_after_data(&$mform) {
+        parent::define_after_data($mform);
+        // Set the values.
+        $param = $mform->getElement('param5');
+        $param->setValue(base64_decode($param->getValue()));
+    }
+
+    /**
+     * Process data before saving to db.
+     *
+     * @param $data
+     * @return array|stdClass
+     */
+    public function define_save_preprocess($data) {
+        $data = parent::define_save_preprocess($data);
+        // Encode regex as regex pattern can use some nasty characters.
+        $data->param5 = base64_encode($data->param5);
+        return $data;
     }
 
 }

@@ -24,47 +24,16 @@
 class profile_field_remotevalidation extends profile_field_base {
 
     /**
-     * Display the data for this field
-     *
-     * @return string data for custom profile field.
-     */
-
-            /**
-     * Overwrite the base class to display the data for this field
-     */
-    public function display_data() {
-        // Default formatting.
-        $data = parent::display_data();
-
-        // Are we creating a link?
-        if (!empty($this->field->param4) and !empty($data)) {
-
-            // Define the target.
-            if (! empty($this->field->param5)) {
-                $target = 'target="'.$this->field->param5.'"';
-            } else {
-                $target = '';
-            }
-
-            // Create the link.
-            $icon = '<span class="media-left"><i class="icon fa fa-graduation-cap fa-fw " aria-hidden="true"></i></span>';
-            $data = '<a href="'.str_replace('$$', urlencode($data), $this->field->param4).'" '.$target.'>'.$icon.htmlspecialchars($data).'</a>';
-        }
-
-        return $data;
-    }
-
-
-
-    /**
      * Adds the profile field to the moodle form class
      *
      * @param moodleform $mform instance of the moodleform class
      */
     public function edit_field_add($mform) {
+        global $PAGE;
         $size = 19;
         $maxlength = 19;
         $fieldtype = 'text';
+        $PAGE->requires->js_call_amd('profilefield_remotevalidation/checkotherfield', 'init');
 
         // Create the form field.
         $mform->addElement($fieldtype, $this->inputname, format_string($this->field->name), 'maxlength="'.$maxlength.'" size="'.$size.'" ');
@@ -76,31 +45,19 @@ class profile_field_remotevalidation extends profile_field_base {
      * Validate the form field from profile page
      *
      * @param stdClass $usernew user input
-     * @return string contains error message otherwise NULL
+     * @return array contains error message otherwise NULL
      **/
-    function edit_validate_field($usernew) {
-        // overwrite if necessary
+    function edit_validate_field($usernew): array {
+        // Overwrite if necessary.
         $errors = array();
+        $input_name_array = get_object_vars($usernew);
 
-
-        $usernew->firstname = "xxx";
-
-        $input_name_array = $array = get_object_vars($usernew);
-
-        if ( !preg_match('/(\d{4}\-\d{4}\-\d{4}\-\d{3}(?:\d|X))/', $input_name_array[$this->inputname] ) ){
-
-           // $errors[$this->inputname] = "Invalid remote validation error-".preg_last_error();
-	    }
-
-        if ($message = $this->validate($input_name_array[$this->inputname])) {
+        if ($message = $this->validate("{$input_name_array[$this->inputname]}")) {
             $errors[$this->inputname] = "Validation returned the following error: " . $message;
         }
 
         return $errors;
-
     }
-
-
 
     /**
      * Return the field type and null properties.
@@ -109,16 +66,40 @@ class profile_field_remotevalidation extends profile_field_base {
      * @return array the param type and null property
      * @since Moodle 3.2
      */
-    public function get_field_properties() {
-        return array(PARAM_TEXT, NULL_NOT_ALLOWED);
+    public function get_field_properties(): array {
+        return array(PARAM_ALPHANUM, NULL_NOT_ALLOWED);
+    }
+
+    public function edit_save_data_preprocess($data, $datarecord) {
+        global $DB;
+        // Conditional creation of a fake unique number.
+        if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) && strtolower($data) === "nopin") {
+            $datestring = date('dmY');
+            $uniquenumber = 0 . str_pad(mt_rand(0, 99999), 4, '0', STR_PAD_LEFT);
+            $data = "9" . $datestring . $uniquenumber;
+        }
+        return parent::edit_save_data_preprocess($data, $datarecord);
     }
 
     /**
-     * Validate via a remote server.
+     * Validate via a remote server
      *
-     * @return null|string
+     * @param string $datastring
+     * @return string|null
      */
-    public function validate(string $datastring) {
+    public function validate(string $datastring): ?string {
+        global $DB;
+        // First validate if the input matches the regex pattern. Get config for pattern validation:
+        if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) && strtolower($datastring) === "nopin"
+        || preg_match('/^([129])(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[012])(19|20)\d{7}$/', $datastring)) {
+            return null;
+        }
+        if (!empty($this->field->param5) and !empty($this->data)) {
+            $pattern = base64_decode($this->field->param5);
+            if ( !preg_match("/$pattern/", $datastring) ){
+                return "Your input does not match the required pattern.";
+            }
+        }
 
         if (!empty($this->field->param4)) {
             $url1 = str_replace('$$', $datastring, $this->field->param4);
@@ -148,7 +129,6 @@ class profile_field_remotevalidation extends profile_field_base {
         } else if ($object->err_msg != "ok") {
             return get_string('yourpinisinvalid', 'profilefield_remotevalidation');
         }
-
         return null;
     }
 
@@ -158,7 +138,7 @@ class profile_field_remotevalidation extends profile_field_base {
      * @param string $url
      * @return object
      */
-    private function send_request(string $url) {
+    private function send_request(string $url): string {
         $curl = curl_init();
 
         curl_setopt_array($curl, array(
@@ -173,10 +153,13 @@ class profile_field_remotevalidation extends profile_field_base {
         ));
 
         $response = curl_exec($curl);
-
         curl_close($curl);
-
-        return json_decode($response);
+        $return = json_decode($response);
+        $error = json_last_error();
+        if(empty($response) || $error !== JSON_ERROR_NONE) {
+            return "" . $response;
+        }
+        return $return;
     }
 }
 
