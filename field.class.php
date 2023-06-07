@@ -33,7 +33,11 @@ class profile_field_remotevalidation extends profile_field_base {
         $size = 19;
         $maxlength = 19;
         $fieldtype = 'text';
-        $PAGE->requires->js_call_amd('profilefield_remotevalidation/checkotherfield', 'init');
+        $isadmin = 0;
+        if (is_siteadmin()) {
+            $isadmin = 1;
+        }
+        $PAGE->requires->js_call_amd('profilefield_remotevalidation/checkotherfield', 'init', [$isadmin]);
 
         // Create the form field.
         $mform->addElement($fieldtype, $this->inputname, format_string($this->field->name), 'maxlength="'.$maxlength.'" size="'.$size.'" ');
