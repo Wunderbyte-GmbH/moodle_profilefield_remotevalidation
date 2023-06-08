@@ -20,8 +20,8 @@
 export const init = (isadmin) => {
     // Regex to check of the entered data is in the format of the PIN.
     const regex = /^[12]\d{13}$/;
-    const regexfake = /^[9]\d{13}$/;
-    const mform = document.querySelector('[class="mform"]');
+    const regexfake = /^9\d{13}$/;
+    const mform = document.querySelector('[role="main"] [class="mform"], .signupform .mform');
     // The input field where the PIN is set by the user.
     let inputfield = document.querySelector('#id_profile_field_PIN');
     // The container of the input field that is going to be shown or hiden.
@@ -35,7 +35,7 @@ export const init = (isadmin) => {
     let initialDropownValue = dropdown.value;
     dropdown.addEventListener('change', () => {
         const selectedValue = dropdown.value;
-        handleDropdownChange(selectedValue, inputfield, parentfield, regexfake);
+        handleDropdownChange(selectedValue, inputfield, parentfield, regex, regexfake, isadmin);
     });
     mform.addEventListener('submit', () => {
         if (regex.test(inputfield.value) && !isadmin) {
@@ -51,8 +51,8 @@ export const init = (isadmin) => {
  * If that contains a certain pattern in order to detect if a fake PIN should be created.
  *
  * @param {string} selectedValue
- * @param {selector} inputfield
- * @param {selector} parentfield
+ * @param {Element} inputfield
+ * @param {Element} parentfield
  * @param {RegExp} regex
  * @param {RegExp} regexfake
  * @param {int} isadmin
@@ -67,6 +67,9 @@ function handleDropdownChange(selectedValue, inputfield, parentfield, regex, reg
         if (regexfake.test(inputfield.value) && !isadmin) {
             inputfield.disabled = true;
             parentfield.style.display = 'none';
+        }
+        if (inputfield.value === "nopin") {
+            inputfield.value = "";
         }
     }
 }

@@ -79,7 +79,7 @@ class profile_field_remotevalidation extends profile_field_base {
         // Conditional creation of a fake unique number.
         if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) && strtolower($data) === "nopin") {
             $datestring = date('dmY');
-            $uniquenumber = 0 . str_pad(mt_rand(0, 99999), 4, '0', STR_PAD_LEFT);
+            $uniquenumber = str_pad(mt_rand(0, 99999), 4, '0', STR_PAD_LEFT);
             $data = "9" . $datestring . $uniquenumber;
         }
         return parent::edit_save_data_preprocess($data, $datarecord);
