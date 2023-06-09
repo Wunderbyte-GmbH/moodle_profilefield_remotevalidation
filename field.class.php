@@ -55,9 +55,13 @@ class profile_field_remotevalidation extends profile_field_base {
         // Overwrite if necessary.
         $errors = array();
         $input_name_array = get_object_vars($usernew);
+        if (empty($input_name_array[$this->inputname])) {
+            $errors['$this->inputname'] = get_string('err_required', 'core_form');
+            return $errors;
+        }
 
         if ($message = $this->validate("{$input_name_array[$this->inputname]}")) {
-            $errors[$this->inputname] = "Validation returned the following error: " . $message;
+            $errors[$this->inputname] = get_string('validationerror', 'profilefield_remotevalidation') . $message;
         }
 
         return $errors;
@@ -94,14 +98,13 @@ class profile_field_remotevalidation extends profile_field_base {
     public function validate(string $datastring): ?string {
         global $DB;
         // First validate if the input matches the regex pattern. Get config for pattern validation:
-        if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) && strtolower($datastring) === "nopin"
-        || preg_match('/^([129])(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[012])(19|20)\d{7}$/', $datastring)) {
+        $pattern = base64_decode($this->field->param5);
+        if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) && strtolower($datastring) === "nopin") {
             return null;
         }
-        if (!empty($this->field->param5) and !empty($this->data)) {
-            $pattern = base64_decode($this->field->param5);
-            if ( !preg_match("/$pattern/", $datastring) ){
-                return "Your input does not match the required pattern.";
+        if (!empty($this->field->param5) and !empty($datastring)) {
+            if ( !preg_match("/{$pattern}/", $datastring) ){
+                return get_string('wrongpattern', 'profilefield_remotevalidation');
             }
         }
 
@@ -131,7 +134,7 @@ class profile_field_remotevalidation extends profile_field_base {
         if (!isset($object->err_msg)) {
             return get_string('problemwithserver', 'profilefield_remotevalidation');
         } else if ($object->err_msg != "ok") {
-            return get_string('yourpinisinvalid', 'profilefield_remotevalidation');
+            return get_string('yourpinisinvalid', 'profilefield_remotevalidation', $this->field->name);
         }
         return null;
     }
@@ -142,26 +145,24 @@ class profile_field_remotevalidation extends profile_field_base {
      * @param string $url
      * @return object
      */
-    private function send_request(string $url): string {
+    private function send_request(string $url): ?object {
         $curl = curl_init();
-
         curl_setopt_array($curl, array(
         CURLOPT_URL => $url,
         CURLOPT_RETURNTRANSFER => true,
-        // CURLOPT_ENCODING => '',
-        // CURLOPT_MAXREDIRS => 10,
         CURLOPT_TIMEOUT => 20,
-        // CURLOPT_FOLLOWLOCATION => true,
-        // CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
         CURLOPT_CUSTOMREQUEST => 'GET',
         ));
 
         $response = curl_exec($curl);
         curl_close($curl);
-        $return = json_decode($response);
         $error = json_last_error();
         if(empty($response) || $error !== JSON_ERROR_NONE) {
-            return "" . $response;
+            $return = new stdClass();
+            $return->err_msg = "" . $response;
+            return $return;
+        } else {
+            $return = json_decode($response);
         }
         return $return;
     }
