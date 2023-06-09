@@ -61,7 +61,8 @@ class profile_field_remotevalidation extends profile_field_base {
         }
 
         if ($message = $this->validate("{$input_name_array[$this->inputname]}")) {
-            $errors[$this->inputname] = get_string('validationerror', 'profilefield_remotevalidation') . $message;
+            $errors[$this->inputname] = get_string('validationerror', 'profilefield_remotevalidation') .
+                    format_string($message);
         }
 
         return $errors;
