@@ -53,10 +53,18 @@ class profile_field_remotevalidation extends profile_field_base {
      **/
     function edit_validate_field($usernew): array {
         // Overwrite if necessary.
-        $errors = array();
+        $errors = parent::edit_validate_field($usernew);
+        if (!empty($errors)) {
+            return $errors;
+        }
         $input_name_array = get_object_vars($usernew);
-        if (empty($input_name_array[$this->inputname])) {
-            $errors['$this->inputname'] = get_string('err_required', 'core_form');
+
+        // Extrea required check as this does not seem to work in the parent method.
+        if (empty($input_name_array[$this->inputname]) && !$this->is_required()) {
+            return $errors;
+        }
+        if (empty($input_name_array[$this->inputname]) && $this->is_required()) {
+            $errors[$this->inputname] = get_string('err_required', 'core_form');
             return $errors;
         }
 
@@ -100,9 +108,16 @@ class profile_field_remotevalidation extends profile_field_base {
         global $DB;
         // First validate if the input matches the regex pattern. Get config for pattern validation:
         $pattern = base64_decode($this->field->param5);
+        // Special validation for KSMI start.
         if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) && strtolower($datastring) === "nopin") {
             return null;
         }
+        if ($DB->record_exists('user_info_field', ['datatype' => 'conditional']) &&
+                preg_match("/^(9)(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[012])(19|20)\d{7}$/", $datastring)) {
+            return null;
+        }
+        // Special validation KSMI end.
+        
         if (!empty($this->field->param5) and !empty($datastring)) {
             if ( !preg_match("/{$pattern}/", $datastring) ){
                 return get_string('wrongpattern', 'profilefield_remotevalidation');
