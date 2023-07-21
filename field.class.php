@@ -99,10 +99,11 @@ class profile_field_remotevalidation extends profile_field_base {
     }
 
     /**
-     * Validate via a remote server
+     * Validate via a remote server.
+     * Returns null if the data could be validated. If not a string with the error messsage is returned.
      *
      * @param string $datastring
-     * @return string|null
+     * @return ?string error message if an error occurs
      */
     public function validate(string $datastring): ?string {
         global $DB;
@@ -134,7 +135,7 @@ class profile_field_remotevalidation extends profile_field_base {
         $fetchagain = false;
         if (empty($url1) || !$object = self::send_request($url1)) {
             $fetchagain = true;
-        } else if (!isset($object->err_msg) || $object->err_msg != "ok") {
+        } else if (isset($object->err_msg) && $object->err_msg != "ok" || empty($object->pin) ) {
             $fetchagain = true;
         }
 
@@ -147,9 +148,13 @@ class profile_field_remotevalidation extends profile_field_base {
             return get_string('noserverdefined', 'profilefield_remotevalidation');
         }
 
-        if (!isset($object->err_msg)) {
+        if (!empty($object) && !isset($object->err_msg) && !empty($object->pin)) {
+            return null;
+        }
+        if (empty($object)) {
             return get_string('problemwithserver', 'profilefield_remotevalidation');
-        } else if ($object->err_msg != "ok") {
+        }
+        if (isset($object->err_msg) && $object->err_msg != "ok" || empty($object->pin)) {
             return get_string('yourpinisinvalid', 'profilefield_remotevalidation', $this->field->name);
         }
         return null;
