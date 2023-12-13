@@ -124,38 +124,24 @@ class profile_field_remotevalidation extends profile_field_base {
                 return get_string('wrongpattern', 'profilefield_remotevalidation');
             }
         }
-
-        if (!empty($this->field->param4)) {
-            $url1 = str_replace('$$', $datastring, $this->field->param4);
-        }
+        
         if (!empty($this->field->param3)) {
-            $url2 = str_replace('$$', $datastring, $this->field->param3);
-        }
-
-        $fetchagain = false;
-        if (empty($url1) || !$object = self::send_request($url1)) {
-            $fetchagain = true;
-        } else if (isset($object->err_msg) && $object->err_msg != "ok" || empty($object->pin) ) {
-            $fetchagain = true;
-        }
-
-        // If we have no valid result, we try with the second url.
-        if (!empty($url2) && $fetchagain) {
-            $object = self::send_request($url2);
-        }
-
-        if (empty($url1) && empty($url2)) {
+            $url = str_replace('$$', $datastring, $this->field->param3);
+            $response = self::send_request($url);
+        } else {
             return get_string('noserverdefined', 'profilefield_remotevalidation');
         }
 
-        if (!empty($object) && !isset($object->err_msg) && !empty($object->pin)) {
+        if (!empty($response) && !isset($response->err) && !empty($response->pin)) {
             return null;
         }
-        if (empty($object)) {
+        if (empty($response)) {
             return get_string('problemwithserver', 'profilefield_remotevalidation');
         }
-        if (isset($object->err_msg) && $object->err_msg != "ok" || empty($object->pin)) {
-            return get_string('yourpinisinvalid', 'profilefield_remotevalidation', $this->field->name);
+        if (isset($response->err) && !empty($response->ru_message)) {
+            return $response->ru_message . " / " . $response->en_message;
+        } else if (empty($response->sf)) {
+            return get_string('yourpinisinvalid', 'profilefield_remotevalidation');
         }
         return null;
     }

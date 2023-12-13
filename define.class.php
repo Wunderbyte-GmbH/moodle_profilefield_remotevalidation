@@ -39,11 +39,6 @@ class profile_define_remotevalidation extends profile_define_base {
         $form->setType('defaultdata', PARAM_TEXT);
 
         // Param 4 for text type contains a link.
-        $form->addElement('text', 'param4', get_string('profilefieldlink', 'admin') . " 01");
-        $form->setType('param4', PARAM_URL);
-        $form->addHelpButton('param4', 'profilefieldlink', 'admin');
-
-        // Param 4 for text type contains a link.
         $form->addElement('text', 'param3', get_string('profilefieldlink', 'admin') . " 02");
         $form->setType('param3', PARAM_URL);
         $form->addHelpButton('param3', 'profilefieldlink', 'admin');

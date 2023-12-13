@@ -3,7 +3,7 @@
 /**
  * Contains language strings
  *
- * @package    profilefield_myprofilefield
+ * @package    profilefield_remotevalidation
  * @category   profilefield
  * @copyright  2023 Georg Maißer
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
