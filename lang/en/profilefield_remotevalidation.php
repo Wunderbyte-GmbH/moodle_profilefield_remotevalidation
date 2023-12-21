@@ -23,3 +23,4 @@ $string['remoteservice_help'] = 'The user input value you want to validate is re
  https://example.com/api/GetInfo?fieldvalue=$$&token=1234567890';
 $string['wrongpattern'] = 'Your input does not match the required pattern.';
 $string['validationerror'] = 'Validation returned the following error: ';
+$string['valuealreadyset'] = 'Value is already set for another user. Please go to {$a} to recover your password.';

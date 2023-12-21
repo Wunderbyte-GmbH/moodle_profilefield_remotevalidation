@@ -117,6 +117,36 @@ class profile_field_remotevalidation extends profile_field_base {
                 preg_match("/^(9)(0[1-9]|[12][0-9]|3[01])(0[1-9]|1[012])(19|20)\d{7}$/", $datastring)) {
             return null;
         }
+        // Check if PIN is already used for another user.
+        $shortname = $this->get_shortname();
+
+        // SQL query to check if the value is already set for another user
+        $sql = "
+    SELECT COUNT(*)
+    FROM {user_info_data} uid
+    JOIN {user_info_field} uif ON uid.fieldid = uif.id
+    WHERE uif.shortname = :shortname
+    AND uid.data = :newvalue
+";
+
+        $params = [
+                'shortname' => $shortname,
+                'newvalue' => $this->field->param3,
+        ];
+
+        $count = $DB->count_records_sql($sql, $params);
+
+        // Check if count is zero, indicating the value is unique
+        if ($count === 0) {
+            // The value is unique. Do nothing.
+        } else {
+            // The value is not unique, that means a user already exists using that PIN.
+            $pwrecovery = html_writer::link(
+                    new moodle_url('/login/forgot_password.php'),
+                    get_string('passwordrecovery', 'core')
+            );
+            return get_string('valuealreadyset', 'profilefield_remotevalidation', $pwrecovery);;
+        }
         // Special validation KSMI end.
         
         if (!empty($this->field->param5) and !empty($datastring)) {
@@ -132,7 +162,7 @@ class profile_field_remotevalidation extends profile_field_base {
             return get_string('noserverdefined', 'profilefield_remotevalidation');
         }
 
-        if (!empty($response) && !isset($response->err) && !empty($response->pin)) {
+        if (!empty($response) && !isset($response->err) && $response->err_msg == "ok") {
             return null;
         }
         if (empty($response)) {
@@ -140,8 +170,6 @@ class profile_field_remotevalidation extends profile_field_base {
         }
         if (isset($response->err) && !empty($response->ru_message)) {
             return $response->ru_message . " / " . $response->en_message;
-        } else if (empty($response->sf)) {
-            return get_string('yourpinisinvalid', 'profilefield_remotevalidation');
         }
         return null;
     }

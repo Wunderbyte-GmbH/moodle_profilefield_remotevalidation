@@ -23,3 +23,5 @@ $string['remoteservice_help'] = 'Значение пользовательско
  https://example.com/api/GetInfo?fieldvalue=$$&token=1234567890';
 $string['wrongpattern'] = 'Ваш ввод не соответствует требуемому шаблону.';
 $string['validationerror'] = 'При валидации возникла следующая ошибка: ';
+$string['valuealreadyset'] = 'Это значение уже установлено для другого пользователя. Пожалуйста, перейдите по ссылке {$a}, чтобы восстановить свой пароль.';
+
