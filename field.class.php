@@ -106,7 +106,7 @@ class profile_field_remotevalidation extends profile_field_base {
      * @return ?string error message if an error occurs
      */
     public function validate(string $datastring): ?string {
-        global $DB;
+        global $DB, $USER;
         // First validate if the input matches the regex pattern. Get config for pattern validation:
         $pattern = base64_decode($this->field->param5);
         // Special validation for KSMI start.
@@ -127,11 +127,13 @@ class profile_field_remotevalidation extends profile_field_base {
     JOIN {user_info_field} uif ON uid.fieldid = uif.id
     WHERE uif.shortname = :shortname
     AND uid.data = :newvalue
+    AND uid.userid <> :currentuserid
 ";
 
         $params = [
                 'shortname' => $shortname,
                 'newvalue' => $this->field->param3,
+                'currentuserid' => $USER->id,
         ];
 
         $count = $DB->count_records_sql($sql, $params);
