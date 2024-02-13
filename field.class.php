@@ -119,16 +119,15 @@ class profile_field_remotevalidation extends profile_field_base {
         }
         // Check if PIN is already used for another user.
         $shortname = $this->get_shortname();
-
         // SQL query to check if the value is already set for another user
         $sql = "
-    SELECT COUNT(*)
-    FROM {user_info_data} uid
-    JOIN {user_info_field} uif ON uid.fieldid = uif.id
-    WHERE uif.shortname = :shortname
-    AND uid.data = :newvalue
-    AND uid.userid <> :currentuserid
-";
+            SELECT COUNT(*)
+            FROM {user_info_data} uid
+            JOIN {user_info_field} uif ON uid.fieldid = uif.id
+            WHERE uif.shortname = :shortname
+            AND uid.data = :newvalue
+            AND uid.userid <> :currentuserid
+        ";
 
         $params = [
                 'shortname' => $shortname,
@@ -199,7 +198,7 @@ class profile_field_remotevalidation extends profile_field_base {
             $return->err_msg = "" . $response;
             return $return;
         } else {
-            $return = json_decode($response);
+            $return = json_decode($response, true);
         }
         return $return;
     }
