@@ -198,7 +198,7 @@ class profile_field_remotevalidation extends profile_field_base {
             $return->err_msg = "" . $response;
             return $return;
         } else {
-            $return = json_decode($response, true);
+            $return = json_decode($response, false);
         }
         return $return;
     }
