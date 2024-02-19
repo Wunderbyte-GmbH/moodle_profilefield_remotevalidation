@@ -19,10 +19,10 @@
  */
 export const init = (isadmin) => {
     // Regex to check of the entered data is in the format of the PIN.
-    let issignup = 0;
-    if (document.querySelector('div.signupform')) {
-        issignup = 1; // Set the value to 1 if the element exists
-    }
+    // let issignup = 0;
+    // if (document.querySelector('div.signupform')) {
+    //     issignup = 1; // Set the value to 1 if the element exists
+    // }
     const regex = /^[12]\d{13}$/;
     const regexfake = /^9\d{13}$/;
     const mform = document.querySelector('[role="main"] [class="mform"], .signupform .mform');
@@ -31,10 +31,12 @@ export const init = (isadmin) => {
     // The container of the input field that is going to be shown or hiden.
     let parentfield = document.querySelector('#fitem_id_profile_field_PIN');
     // Hide the field when the PIN is already there. Only admins can view and edit the field.
+    /*
     if (regex.test(inputfield.value) && !isadmin && !issignup) {
         inputfield.disabled = true;
         parentfield.style.display = 'none';
     }
+    */
     let dropdown = document.querySelector('#id_profile_field_pincheck');
     let initialDropownValue = dropdown.value;
     dropdown.addEventListener('change', () => {
